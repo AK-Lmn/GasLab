@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="GasLab favicon">
+  <defs>
+    <linearGradient id="bg" x1="10" y1="6" x2="54" y2="58" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#163a74"/>
+      <stop offset="1" stop-color="#0b1f3f"/>
+    </linearGradient>
+    <linearGradient id="bubble" x1="18" y1="14" x2="46" y2="50" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8fe9ff"/>
+      <stop offset="1" stop-color="#e9fbff"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#bg)"/>
+  <circle cx="22" cy="19" r="4" fill="url(#bubble)" opacity="0.95"/>
+  <circle cx="42" cy="16" r="2.8" fill="url(#bubble)" opacity="0.8"/>
+  <circle cx="46" cy="29" r="2.2" fill="url(#bubble)" opacity="0.7"/>
+  <path d="M22 20c0 12 2.7 18 9 18s9-6 9-18v-3h-3.5c-.7 0-1.2-.6-1-1.3l1.1-3.2c.2-.6-.2-1.2-.8-1.2h-10c-.6 0-1 .6-.8 1.2l1.1 3.2c.2.7-.3 1.3-1 1.3H22v3Z" fill="#dff7ff" opacity="0.98"/>
+  <path d="M21.5 26h21" stroke="#78dfff" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+  <path d="M25 35h14" stroke="#78dfff" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+  <circle cx="32" cy="31" r="4.2" fill="#74e5ff" opacity="0.9"/>
+</svg>

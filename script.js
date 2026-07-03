@@ -309,5 +309,5 @@ inputBoxesEls.forEach((item) => {
 });
 
 document.querySelector('.home-btn').addEventListener('click', function () {
-  window.location.href = 'https://chemistryhub.carrd.co';
+  window.location.href = 'https://chemkit.vercel.app/';
 });

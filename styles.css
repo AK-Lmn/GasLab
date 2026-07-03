@@ -106,6 +106,10 @@ body::before {
   flex-shrink: 0;
 }
 
+.home-btn {
+  min-width: 168px;
+}
+
 .main-shell {
   display: grid;
   gap: 18px;
@@ -350,16 +354,26 @@ body::before {
     padding: 20px;
   }
 
+  .hero-actions {
+    width: 100%;
+  }
+
+  .home-btn {
+    width: 100%;
+    min-width: 0;
+  }
+
   .main-shell {
     padding: 16px;
   }
 
   .box-2 {
-    gap: 10px;
+    gap: 12px;
   }
 
   .opt-btn {
     flex-basis: 100%;
+    min-height: 50px;
   }
 
   .box-3 {
