@@ -2,10 +2,11 @@
 const inputBoxesEls = document.querySelectorAll(".input");
 const labelEls = document.querySelectorAll(".label");
 const dropDownMenu = document.querySelector(".ddMenu");
-const boylesBtn = document.querySelector(".boyle-btn");
-const charlesBtn = document.querySelector(".charles-btn");
 const optBtn = document.querySelectorAll(".opt-btn");
 const lblUnit = document.querySelectorAll(".lbl-unit");
+const messageEl = document.querySelector("#calc-message");
+const formulaTextEl = document.querySelector("#formula-text");
+const formulaNoteEl = document.querySelector("#formula-note");
 
 
 let currentType = "boyle";
@@ -43,6 +44,100 @@ const igeLabels = ["Pressure", "Volume", "Number of moles", "Temperature"];
 
 
 const units = ["kpa", "L", "moles", "K"];
+
+const scientificThreshold = 1e-3;
+const scientificUpperThreshold = 1e4;
+const formulaMap = {
+  boyle: { formula: "P<sub>1</sub>V<sub>1</sub> = P<sub>2</sub>V<sub>2</sub>", note: "Pressure and volume change inversely at constant temperature." },
+  charles: { formula: "V<sub>1</sub>/T<sub>1</sub> = V<sub>2</sub>/T<sub>2</sub>", note: "Volume and temperature change together at constant pressure." },
+  gaylussac: { formula: "P<sub>1</sub>/T<sub>1</sub> = P<sub>2</sub>/T<sub>2</sub>", note: "Pressure and temperature change together at constant volume." },
+  avogadro: { formula: "V<sub>1</sub>/n<sub>1</sub> = V<sub>2</sub>/n<sub>2</sub>", note: "Volume and moles change together at constant pressure and temperature." },
+  ige: { formula: "PV = nRT", note: "Use the ideal gas law to connect pressure, volume, moles, and temperature." },
+};
+
+const showMessage = function (message) {
+  messageEl.textContent = message;
+  messageEl.hidden = !message;
+};
+
+const clearResult = function () {
+  const resultField = inputBoxesEls[currentVar - 1];
+  resultField.value = "";
+};
+
+const clearMessageIfReady = function () {
+  showMessage("");
+};
+
+const updateFormulaCard = function (type) {
+  const content = formulaMap[type] || formulaMap.boyle;
+  formulaTextEl.innerHTML = content.formula;
+  formulaNoteEl.textContent = content.note;
+};
+
+const isFiniteNumber = function (value) {
+  return Number.isFinite(value);
+};
+
+const formatResult = function (value) {
+  if (!Number.isFinite(value)) {
+    return "";
+  }
+  const absValue = Math.abs(value);
+  if ((absValue > 0 && absValue < scientificThreshold) || absValue >= scientificUpperThreshold) {
+    return value.toExponential(3);
+  }
+  return value.toFixed(3);
+};
+
+const setError = function (message) {
+  clearResult();
+  showMessage(message);
+};
+
+const validateInputs = function (type, resVar, arrEls) {
+  const requiredIndices = [];
+  for (let i = 0; i < arrEls.length; i++) {
+    if (!arrEls[i].classList.contains("result")) {
+      requiredIndices.push(i);
+    }
+  }
+
+  for (const index of requiredIndices) {
+    const rawValue = arrEls[index].value.trim();
+    if (rawValue === "") {
+      return { valid: false, message: "Please fill in all required fields." };
+    }
+    const numericValue = Number(rawValue);
+    if (!isFiniteNumber(numericValue)) {
+      return { valid: false, message: "Please enter valid finite numbers only." };
+    }
+    if (numericValue <= 0) {
+      return { valid: false, message: "All values must be greater than 0." };
+    }
+    if (type === "ige" && index === 3 && numericValue <= 0) {
+      return { valid: false, message: "Temperature in Kelvin must be greater than 0." };
+    }
+  }
+
+  const fullValues = arrEls.map((item) => Number(item.value));
+  if (type === "ige") {
+    if (resVar === 1 && fullValues[1] === 0) {
+      return { valid: false, message: "Division by zero is not allowed." };
+    }
+    if (resVar === 2 && fullValues[0] === 0) {
+      return { valid: false, message: "Division by zero is not allowed." };
+    }
+    if (resVar === 3 && fullValues[3] === 0) {
+      return { valid: false, message: "Division by zero is not allowed." };
+    }
+    if (resVar === 4 && fullValues[2] === 0) {
+      return { valid: false, message: "Division by zero is not allowed." };
+    }
+  }
+
+  return { valid: true };
+};
 
 
 const getLabels = function (type, index) {
@@ -148,7 +243,7 @@ const calcGasLaws = function (values, resVar, type) {
 };
 
 dropDownMenu.addEventListener("change", (event) => {
-  for (i = 1; i < inputBoxesEls.length + 1; i++) {
+  for (let i = 1; i < inputBoxesEls.length + 1; i++) {
     document.getElementById("input-" + i).value = "";
     if (
       `${event.target.value}:` ==
@@ -165,12 +260,14 @@ dropDownMenu.addEventListener("change", (event) => {
       inputBoxesEls[currentVar - 1].readOnly = true;
     }
   }
+  clearMessageIfReady();
 });
 
 optBtn.forEach((item) => {
   item.addEventListener("click", () => {
     const type = item.className.substring(0, item.className.indexOf("-"));
     currentType = type;
+    updateFormulaCard(type);
     for (let i = 0; i < labelEls.length; i++) {
       labelEls[i].textContent = `${getLabels(type, i)}:`;
       dropDownMenu.options[i].text = getLabels(type, i);
@@ -182,17 +279,31 @@ optBtn.forEach((item) => {
       el.classList.remove("selected");
     });
     item.classList.add("selected");
+    clearMessageIfReady();
   });
 });
 
+updateFormulaCard(currentType);
+
 inputBoxesEls.forEach((item) => {
   item.oninput = () => {
+    const validation = validateInputs(currentType, currentVar, inputBoxesEls);
+    if (!validation.valid) {
+      setError(validation.message);
+      return;
+    }
     getValues(inputBoxesEls, values);
-    const result = calcGasLaws(values, currentVar, currentType).toFixed(3);
-    if (!isNaN(result)) {
+    const rawResult = calcGasLaws(values, currentVar, currentType);
+    if (!Number.isFinite(rawResult) || rawResult <= 0) {
+      setError("The current values produce an invalid result.");
+      return;
+    }
+    const result = formatResult(rawResult);
+    if (result) {
+      clearMessageIfReady();
       inputBoxesEls[currentVar - 1].value = result;
     } else {
-      inputBoxesEls[currentVar - 1].value = "";
+      setError("The current values produce an invalid result.");
     }
   };
 });
