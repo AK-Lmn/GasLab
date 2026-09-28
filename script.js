@@ -1,4 +1,6 @@
 
+import { calculateGasLaw } from "./src/lib/gas-laws.js";
+
 const inputBoxesEls = document.querySelectorAll(".input");
 const labelEls = document.querySelectorAll(".label");
 const dropDownMenu = document.querySelector(".ddMenu");
@@ -120,7 +122,7 @@ const validateInputs = function (type, resVar, arrEls) {
     }
   }
 
-  const fullValues = arrEls.map((item) => Number(item.value));
+  const fullValues = Array.from(arrEls, (item) => Number(item.value));
   if (type === "ige") {
     if (resVar === 1 && fullValues[1] === 0) {
       return { valid: false, message: "Division by zero is not allowed." };
@@ -198,50 +200,6 @@ const getValues = function (arrEls, arrValues) {
   }
 };
 
-const calcGasLaws = function (values, resVar, type) {
-  if (type == "boyle") {
-    switch (resVar) {
-      case 1:
-        return (values[2] * values[3]) / values[1];
-      case 2:
-        return (values[2] * values[3]) / values[0];
-      case 3:
-        return (values[0] * values[1]) / values[3];
-      case 4:
-        return (values[0] * values[1]) / values[2];
-      default:
-        return -1;
-    }
-  } else if (type == "ige") {
-    const R = 8.31;
-    switch (resVar) {
-      case 1: //P
-        return (values[2] * R * values[3]) / values[1];
-      case 2: //V
-        return (values[2] * R * values[3]) / values[0];
-      case 3: //n
-        return (values[0] * values[1]) / (R * values[3]);
-      case 4: //T
-        return (values[0] * values[1]) / (values[2] * R);
-      default:
-        return -1;
-    }
-  } else {
-    switch (resVar) {
-      case 1: //[0]
-        return (values[2] * values[1]) / values[3];
-      case 2: //[1]
-        return (values[3] * values[0]) / values[2];
-      case 3: //[2]
-        return (values[3] * values[0]) / values[1];
-      case 4: //[3]
-        return (values[2] * values[1]) / values[0];
-      default:
-        return -1;
-    }
-  }
-};
-
 dropDownMenu.addEventListener("change", (event) => {
   for (let i = 1; i < inputBoxesEls.length + 1; i++) {
     document.getElementById("input-" + i).value = "";
@@ -293,7 +251,13 @@ inputBoxesEls.forEach((item) => {
       return;
     }
     getValues(inputBoxesEls, values);
-    const rawResult = calcGasLaws(values, currentVar, currentType);
+    let rawResult;
+    try {
+      rawResult = calculateGasLaw(currentType, values, currentVar - 1);
+    } catch (error) {
+      setError(error.message);
+      return;
+    }
     if (!Number.isFinite(rawResult) || rawResult <= 0) {
       setError("The current values produce an invalid result.");
       return;
